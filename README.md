@@ -257,14 +257,6 @@ This document is provided to help reviewers understand how the system behaves ac
 
 ---
 
-## Video Explanation
-
-A detailed video walkthrough explaining the system design, safety decisions, and evaluation approach will be added here.
-
-Insert video link here.
-
----
-
 ## Summary
 
 This project demonstrates a production minded, safety first, corpus grounded internal knowledge assistant designed for a health adjacent domain. It prioritises correctness over fluency, refusal over speculation, and traceability over convenience, making it a strong reference implementation for grounded RAG systems under strict safety constraints.
