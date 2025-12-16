@@ -2,3 +2,4 @@ streamlit
 rank-bm25
 numpy
 pandas
+sentence-transformers
