@@ -13,25 +13,35 @@ class HybridRetriever:
         ]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
 
-        # Embedding model (FORCE CPU FOR STREAMLIT CLOUD)
-        self.embedder = SentenceTransformer(
-            "all-MiniLM-L6-v2",
-            device="cpu"
-        )
+        # ---- LAZY INIT FLAGS (ADDED, NOTHING REMOVED) ----
+        self._embedder = None
+        self._embeddings = None
 
-        self.embeddings = self.embedder.encode(
-            [chunk["text"] for chunk in chunks],
-            normalize_embeddings=True
-        )
+    # ---- LAZY LOADER (ADDED) ----
+    def _load_embeddings(self):
+        if self._embedder is None:
+            self._embedder = SentenceTransformer(
+                "all-MiniLM-L6-v2",
+                device="cpu"
+            )
+
+        if self._embeddings is None:
+            self._embeddings = self._embedder.encode(
+                [chunk["text"] for chunk in self.chunks],
+                normalize_embeddings=True
+            )
 
     def retrieve(self, query, top_k=5, bm25_weight=0.5):
+        # ---- ENSURE EMBEDDINGS LOADED ONLY WHEN NEEDED ----
+        self._load_embeddings()
+
         query_tokens = query.lower().split()
         bm25_scores = self.bm25.get_scores(query_tokens)
 
-        query_embedding = self.embedder.encode(
+        query_embedding = self._embedder.encode(
             query, normalize_embeddings=True
         )
-        semantic_scores = np.dot(self.embeddings, query_embedding)
+        semantic_scores = np.dot(self._embeddings, query_embedding)
 
         # Normalize scores
         bm25_norm = (bm25_scores - np.min(bm25_scores)) / (
