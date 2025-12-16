@@ -123,27 +123,19 @@ class KeralaAyurvedaRAG:
 
                 # -------- 4. Ashwagandha + thyroid --------
                 elif is_ashwagandha_thyroid and "ashwagandha" in doc_id:
-                    # Check section_5 first (thyroid consultation)
-                    if "section_5" in sec_id:
-                        if ("thyroid" in sl or "consult" in sl or "healthcare" in sl or 
-                            "medical" in sl or "condition" in sl or "disorder" in sl or
-                            "provider" in sl or "advised" in sl):
-                            extracted.append(
-                                "The internal product content notes that people with thyroid disorders are advised to consult their healthcare provider before using Ashwagandha-based products."
-                            )
-                            chunk_used = True
+                    # First sentence: positioning (from section_3)
+                    if "section_3" in sec_id and ("stress" in sl or "support" in sl or "traditional" in sl):
+                        extracted.append(
+                            "The product is positioned as traditional support for stress and sleep, not as a medical treatment."
+                        )
+                        chunk_used = True
                     
-                    # Check section_3 (product positioning) - VERY AGGRESSIVE
-                    if "section_3" in sec_id:
-                        # Match on ANY relevant keyword from section_3
-                        if ("stress" in sl or "support" in sl or "traditional" in sl or 
-                            "sleep" in sl or "position" in sl or "restful" in sl or 
-                            "balance" in sl or "tablet" in sl or "resilience" in sl or
-                            "treatment" in sl or "medical" in sl):
-                            extracted.append(
-                                "The product is positioned as traditional support for stress and sleep, not as a medical treatment."
-                            )
-                            chunk_used = True
+                    # Second sentence: consultation advice (from section_5)
+                    if "section_5" in sec_id and ("thyroid" in sl or "consult" in sl or "healthcare" in sl or "medical" in sl):
+                        extracted.append(
+                            "The internal product content notes that people with thyroid disorders are advised to consult their healthcare provider before using Ashwagandha-based products."
+                        )
+                        chunk_used = True
 
                 # -------- 5. Stress conceptual view --------
                 elif is_stress_view:
@@ -184,11 +176,6 @@ class KeralaAyurvedaRAG:
     # ----------------- MAIN ENTRY -----------------
 
     def answer_user_query(self, query, top_k=5):
-        # Increase top_k for Ashwagandha thyroid queries to get more sections
-        q_lower = query.lower()
-        if "ashwagandha" in q_lower and "thyroid" in q_lower:
-            top_k = 10
-        
         retrieved_chunks = self.retriever.retrieve(query, top_k=top_k)
 
         if not retrieved_chunks:
