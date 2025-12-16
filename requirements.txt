@@ -1,6 +1,6 @@
 streamlit
-sentence-transformers
+sentence-transformers==2.2.2
+torch==2.0.1
 rank-bm25
 numpy
 pandas
-python-dotenv

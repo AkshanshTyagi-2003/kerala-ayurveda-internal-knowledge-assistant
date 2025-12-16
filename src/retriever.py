@@ -13,8 +13,12 @@ class HybridRetriever:
         ]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
 
-        # Embedding model
-        self.embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        # Embedding model (FORCE CPU FOR STREAMLIT CLOUD)
+        self.embedder = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            device="cpu"
+        )
+
         self.embeddings = self.embedder.encode(
             [chunk["text"] for chunk in chunks],
             normalize_embeddings=True
