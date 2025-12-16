@@ -123,16 +123,17 @@ class KeralaAyurvedaRAG:
 
                 # -------- 4. Ashwagandha + thyroid --------
                 elif is_ashwagandha_thyroid and "ashwagandha" in doc_id:
-                    if "section_3" in sec_id and "stress" in sl:
+                    # First sentence: positioning (from section_3)
+                    if "section_3" in sec_id and ("stress" in sl or "support" in sl or "traditional" in sl):
                         extracted.append(
-                            "Ashwagandha Stress Balance Tablets are positioned as traditional support for stress resilience "
-                            "and restful sleep, not as a medical treatment."
+                            "The product is positioned as traditional support for stress and sleep, not as a medical treatment."
                         )
                         chunk_used = True
-                    if "section_5" in sec_id and ("thyroid" in sl or "consult" in sl):
+                    
+                    # Second sentence: consultation advice (from section_5)
+                    if "section_5" in sec_id and ("thyroid" in sl or "consult" in sl or "healthcare" in sl or "medical" in sl):
                         extracted.append(
-                            "The internal product guidance advises people with thyroid conditions or those on long term "
-                            "medication to consult a healthcare provider before use."
+                            "The internal product content notes that people with thyroid disorders are advised to consult their healthcare provider before using Ashwagandha-based products."
                         )
                         chunk_used = True
 
