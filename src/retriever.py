@@ -1,6 +1,6 @@
 from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
 import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class HybridRetriever:
@@ -13,24 +13,29 @@ class HybridRetriever:
         ]
         self.bm25 = BM25Okapi(self.tokenized_corpus)
 
-        # Embedding model (FORCE CPU FOR STREAMLIT CLOUD)
-        self.embedder = SentenceTransformer(
-            "all-MiniLM-L6-v2",
-            device="cpu"
+        # Use TfidfVectorizer instead of sentence-transformers
+        self.vectorizer = TfidfVectorizer(
+            max_features=384,  # Similar dimension to all-MiniLM-L6-v2
+            ngram_range=(1, 2),
+            sublinear_tf=True
         )
-
-        self.embeddings = self.embedder.encode(
-            [chunk["text"] for chunk in chunks],
-            normalize_embeddings=True
-        )
+        
+        corpus_texts = [chunk["text"] for chunk in chunks]
+        self.embeddings = self.vectorizer.fit_transform(corpus_texts).toarray()
+        
+        # Normalize embeddings
+        norms = np.linalg.norm(self.embeddings, axis=1, keepdims=True)
+        self.embeddings = self.embeddings / (norms + 1e-8)
 
     def retrieve(self, query, top_k=5, bm25_weight=0.5):
         query_tokens = query.lower().split()
         bm25_scores = self.bm25.get_scores(query_tokens)
 
-        query_embedding = self.embedder.encode(
-            query, normalize_embeddings=True
-        )
+        # Transform query using the same vectorizer
+        query_embedding = self.vectorizer.transform([query]).toarray()[0]
+        query_norm = np.linalg.norm(query_embedding)
+        query_embedding = query_embedding / (query_norm + 1e-8)
+        
         semantic_scores = np.dot(self.embeddings, query_embedding)
 
         # Normalize scores
