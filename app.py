@@ -2,23 +2,29 @@ import streamlit as st
 import sys
 import os
 
-# Debug info
-st.sidebar.write("Python version:", sys.version)
-st.sidebar.write("Current directory:", os.getcwd())
-st.sidebar.write("Files in src/:", os.listdir("src") if os.path.exists("src") else "src not found")
-
-try:
-    from src.rag_engine import KeralaAyurvedaRAG
-    st.sidebar.success("✅ Import successful")
-except Exception as e:
-    st.sidebar.error(f"❌ Import error: {e}")
-    st.stop()
-
 st.set_page_config(
     page_title="Kerala Ayurveda Internal Assistant",
     page_icon="🌿",
     layout="centered"
 )
+
+# ----------------- DEBUG INFO -----------------
+
+st.sidebar.write("Python version:", sys.version)
+st.sidebar.write("Current directory:", os.getcwd())
+st.sidebar.write(
+    "Files in src/:",
+    os.listdir("src") if os.path.exists("src") else "src not found"
+)
+
+try:
+    from src.rag_engine import KeralaAyurvedaRAG  # Import from rag_engine.py
+    st.sidebar.success("✅ Import successful")
+except Exception as e:
+    st.sidebar.error(f"❌ Import error: {e}")
+    st.stop()
+
+# ----------------- UI -----------------
 
 st.title("🌿 Kerala Ayurveda – Internal Knowledge Assistant")
 st.caption(
@@ -26,21 +32,25 @@ st.caption(
     "This tool provides educational, non-medical information with citations."
 )
 
-# Cache the RAG system to avoid reloading
-@st.cache_resource
+# ----------------- LOAD RAG -----------------
+
+@st.cache_resource  # ADDED: Cache RAG initialization for better performance
 def load_rag():
+    """Initialize RAG system once and cache it."""
     return KeralaAyurvedaRAG()
 
 try:
     rag = load_rag()
-    st.success("✅ RAG system loaded")
+    st.sidebar.success("✅ RAG system initialized")
 except Exception as e:
-    st.error(f"Error loading RAG: {e}")
+    st.sidebar.error(f"❌ Error loading RAG system: {e}")
     st.stop()
+
+# ----------------- QUERY -----------------
 
 query = st.text_input(
     "Ask a question about Ayurveda, products, or clinic programs:",
-    placeholder="e.g. What are the benefits and precautions of Ashwagandha Stress Balance Tablets?"
+    placeholder="e.g. What does Ayurveda mean by Vata, Pitta, and Kapha?"
 )
 
 if query:
@@ -49,27 +59,20 @@ if query:
             response = rag.answer_user_query(query)
 
             st.subheader("Answer")
+            st.markdown(response["answer"])
 
-            # --- CASE 1: Fallback / safety response ---
-            if "answer" in response:
-                st.markdown(response["answer"])
-
-            # --- CASE 2: Grounded answer prompt ---
-            elif "answer_prompt" in response:
-                st.markdown(
-                    "This draft is generated strictly from internal content and follows Kerala Ayurveda tone and safety guidelines."
-                )
-                st.code(response["answer_prompt"], language="text")
-
-                if response.get("citations"):
-                    st.subheader("Sources")
-                    for c in response["citations"]:
-                        st.markdown(f"- **{c['doc_id']}** : {c['section_id']}")
+            # Show citations if available
+            if response.get("citations"):
+                with st.expander("📚 View Citations"):
+                    for i, citation in enumerate(response["citations"], 1):
+                        st.write(f"**{i}.** {citation['doc_id']} → {citation['section_id']}")
 
             st.divider()
             st.caption(
                 "⚠️ This tool is for internal informational use only. "
                 "It does not provide medical advice, diagnosis, or treatment."
             )
+
         except Exception as e:
-            st.error(f"Error processing query: {e}")
+            st.error(f"❌ Error processing query: {e}")
+            st.exception(e)  # Show full traceback for debugging
